@@ -19,7 +19,8 @@ public class ProductDTO {
         this.price = product.getPrice();
     }
 
-
+    public ProductDTO(Long id, String name, double price) {
+    }
 
 
     // Getters & setters
