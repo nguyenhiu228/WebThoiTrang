@@ -1,10 +1,195 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Quản lý Danh mục & Sản phẩm</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        img {
+            max-width: 80px;
+            height: auto;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        input, select {
+            margin: 5px 0;
+            padding: 5px;
+            width: 100%;
+        }
+        #preview {
+            max-width: 200px;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
 </head>
 <body>
-    <h1>Chao mung</h1>
+
+<!-- PHẦN CATEGORY -->
+<h1>Danh sách Category</h1>
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Tên</th>
+        <th>Mô tả</th>
+        <th>Ngày tạo</th>
+        <th>Số sản phẩm</th>
+    </tr>
+    </thead>
+    <tbody id="category-table-body">
+    </tbody>
+</table>
+
+<script>
+    fetch('/api/categories')
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.getElementById('category-table-body');
+            data.forEach(cat => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${cat.categoryId}</td>
+                    <td>${cat.name}</td>
+                    <td>${cat.description || ''}</td>
+                    <td>${cat.createdAt ? new Date(cat.createdAt).toLocaleString() : ''}</td>
+                    <td>${cat.productCount ?? 0}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        })
+        .catch(err => console.error('Lỗi khi gọi API categories:', err));
+</script>
+
+<hr>
+
+<!-- PHẦN PRODUCT -->
+<h1>Danh sách Sản phẩm</h1>
+
+<!-- Form thêm sản phẩm -->
+<form id="productForm" enctype="multipart/form-data">
+    <label>Tên sản phẩm:</label>
+    <input type="text" name="name" required>
+
+    <label>Mô tả:</label>
+    <input type="text" name="description">
+
+    <label>Giá:</label>
+    <input type="number" name="price" step="0.01" required>
+
+    <label>Số lượng:</label>
+    <input type="number" name="stock" required>
+
+    <label>Size:</label>
+    <input type="text" name="size">
+
+    <label>Màu sắc:</label>
+    <input type="text" name="color">
+
+    <label>Category ID:</label>
+    <input type="number" name="categoryId" required>
+
+    <label>Ảnh sản phẩm:</label>
+    <input type="file" name="image" accept="image/*" onchange="previewImage(event)">
+    <img id="preview" alt="Xem trước ảnh">
+
+    <button type="submit">Thêm sản phẩm</button>
+</form>
+
+<!-- Bảng sản phẩm -->
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Tên</th>
+        <th>Giá</th>
+        <th>Số lượng</th>
+        <th>Ảnh</th>
+        <th>Category</th>
+    </tr>
+    </thead>
+    <tbody id="product-table-body">
+    </tbody>
+</table>
+
+<script>
+    // Xem trước ảnh khi chọn file
+    function previewImage(event) {
+        const input = event.target;
+        const preview = document.getElementById('preview');
+
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // Load danh sách sản phẩm
+    function loadProducts() {
+        fetch('/api/products')
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.getElementById('product-table-body');
+                tbody.innerHTML = '';
+                data.forEach(prod => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${prod.productId}</td>
+                        <td>${prod.name}</td>
+                        <td>${prod.price}</td>
+                        <td>${prod.stock}</td>
+                        <td>${prod.imageUrl ? `<img src="${prod.imageUrl}" alt="${prod.name}">` : ''}</td>
+                        <td>${prod.categoryName || prod.categoryId}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            })
+            .catch(err => console.error('Lỗi khi load products:', err));
+    }
+
+    // Submit form thêm sản phẩm
+    document.getElementById('productForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        fetch('/api/products', {
+            method: 'POST',
+            body: formData
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('Lỗi khi tạo sản phẩm');
+                return res.json();
+            })
+            .then(() => {
+                alert('Thêm sản phẩm thành công');
+                this.reset();
+                document.getElementById('preview').style.display = 'none';
+                loadProducts();
+            })
+            .catch(err => alert(err.message));
+    });
+
+    // Load sản phẩm khi mở trang
+    loadProducts();
+</script>
+
 </body>
 </html>
