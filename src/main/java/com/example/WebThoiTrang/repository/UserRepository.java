@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Integer> {
     // Tìm kiếm theo từ khóa trên username, email hoặc fullname (Không phân biệt hoa thường)
@@ -14,15 +15,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
             "OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     List<User> searchUsersByKeyword(@Param("keyword") String keyword);
 
-    List<User> findByUserId(Integer userId);
-
-    List<User> findByUsernameContainingIgnoreCase(String username);
-
-    List<User> findByEmailContainingIgnoreCase(String email);
-
-    List<User> findByFullNameContainingIgnoreCase(String fullName);
-
+    Optional<User> findByUsername(String username);
     boolean existsByUsername(String username);
-
     boolean existsByEmail(String email);
 }
