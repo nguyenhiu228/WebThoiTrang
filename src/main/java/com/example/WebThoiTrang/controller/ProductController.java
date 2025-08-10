@@ -99,16 +99,41 @@ public class ProductController {
     }
 
     // Cập nhật sản phẩm
-    @PutMapping("/{id}")
-    public ResponseEntity<ProductDTO> updateProduct(@PathVariable Integer id,
-                                                    @Valid @RequestBody ProductRequest request) {
-        return ResponseEntity.ok(productService.updateProduct(id, request));
-    }
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ProductDTO> updateProduct(
+            @PathVariable Integer id,
+            @RequestParam("name") String name,
+            @RequestParam("price") Double price,
+            @RequestParam("stock") Integer stock,
+            @RequestParam("categoryId") Integer categoryId,
+            @RequestParam(value = "description", required = false) String description,
+            @RequestParam(value = "size", required = false) String size,
+            @RequestParam(value = "color", required = false) String color,
+            @RequestParam(value = "image", required = false) MultipartFile image
+    ) {
+        String imageUrl = null;
 
-    // Xóa sản phẩm
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProduct(@PathVariable Integer id) {
-        productService.deleteProduct(id);
-        return ResponseEntity.noContent().build();
+        // Nếu có ảnh mới thì lưu ảnh
+        if (image != null && !image.isEmpty()) {
+            imageUrl = fileStorageService.storeFile(image);
+        } else {
+            // Không có ảnh mới -> giữ ảnh cũ
+            imageUrl = productService.getProductById(id)
+                    .map(ProductDTO::getImageUrl) // lấy ảnh cũ
+                    .orElse(null); // nếu không có thì để null
+        }
+
+        // Tạo request object để gửi xuống service
+        ProductRequest request = new ProductRequest();
+        request.setName(name);
+        request.setPrice(price);
+        request.setStock(stock);
+        request.setCategoryId(categoryId);
+        request.setDescription(description);
+        request.setSize(size);
+        request.setColor(color);
+        request.setImageUrl(imageUrl);
+
+        return ResponseEntity.ok(productService.updateProduct(id, request));
     }
 }
