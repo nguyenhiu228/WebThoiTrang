@@ -19,7 +19,7 @@ public class Promotions  {
     private String description;
 
     @Column(name = "discount_percentage")
-    private Double discountPercentage;
+    private Double discountPercentage; // Tỉ lệ giảm giá
 
     @Column(name = "start_date")
     private LocalDateTime startDate;
